@@ -1,0 +1,55 @@
+from tensorflow.keras.datasets import cifar10
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+# Load CIFAR-10 dataset
+(x_train, _), (_, _) = cifar10.load_data()
+# Select two random indices
+random_indices = np.random.randint(0, len(x_train), size=2)
+
+image1 = x_train[random_indices[0]]
+
+def grayscale(image):
+    height, width, channels = image.shape
+    grayscale_image = np.zeros((height, width), dtype=np.uint8)
+
+    for i in range(height):
+        for j in range(width):
+            pixel_value = sum(image[i, j]) // channels
+            grayscale_image[i, j] = pixel_value
+
+    return grayscale_image
+
+def gaussian_hp_filter(image,t):
+    s1=center_img(image)
+    s2=fft(s1)
+    huv=np.zeros(s2.shape)
+    for i in range(s2.shape[0]):
+        for j in range(s2.shape[1]):
+            huv[i,j]=1-(np.exp(-2*(math.pow((i-(s2.shape[0]/2)),2)+math.pow((j-(s2.shape[1]/2)),2))/(math.pow(t,2))))   
+    
+    s3=s2*huv
+    s4=invfft(s3)
+    s5=np.array([elem.real for elem in invfft(s3)]).reshape(s4.shape)
+    s6=center_img(s5)
+    return s6
+
+def fft(image):
+    return np.fft.fft2(image)
+
+def invfft(image):
+    return np.fft.ifft2(image)
+
+def center_img(image):
+    new_image=np.zeros(image.shape)
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            new_image[i,j]=math.pow(-1,(i+j))*image[i,j]
+    return new_image
+
+
+ga = gaussian_hp_filter(image1,60)
+g = grayscale(image1)
+
+plt.imshow(image1, cmap='gray')
+# plt.imshow(g, cmap='gray')
